@@ -46,6 +46,7 @@ source "${JEDI_SETV_DIR}/setv_fcn.sh"
 function setv() {
     #
     # Options:
+    # V: create directory for venvs; defaults to $HOME
     # a: activate a venv
     # c: create a venv
     # p: populate a venv via pip and requirements file
@@ -64,7 +65,7 @@ function setv() {
         _setv_help_
     fi
 
-    while getopts "a:c:p:d:D:H:N:lh" opt; do
+    while getopts "a:c:p:d:D:V:N:lh" opt; do
         case $opt in
             a)  if ! _setv_checkArg $OPTARG ; then
                     echo "$prog: $func: activate: missing venv NAME"
@@ -110,7 +111,7 @@ function setv() {
                 fi
                 ;;
 
-            H) if ! _setv_checkArg $OPTARG ; then
+            V) if ! _setv_checkArg $OPTARG ; then
                     echo "$prog: $func: Home: missing venv home directory"
                     return
                 else

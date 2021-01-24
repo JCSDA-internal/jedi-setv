@@ -219,10 +219,10 @@ function _setv_Home()
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
     if [ -z $1 ]; then
-        echo "$prog: $prog: $func: specify a virtual environment home location"
+        echo "$prog: $func: specify a virtual environment home location"
         return $setv_fail
     else
-        echo "$prog: $prog: $func: creating virtual environment home location '$1'"
+        echo "$prog: $func: creating virtual environment home location '$1'"
         mkdir -pv $1
         export SETV_VIRTUAL_ENV_DIR=$1
     fi
