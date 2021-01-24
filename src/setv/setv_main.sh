@@ -14,7 +14,7 @@ setv_fail=255
 
 set +e
 
-export prog="${BASH_SOURCE[0]}"
+export prog=`basename "${BASH_SOURCE[0]}" | cut -d. -f1 | cut -d_ -f1`
 
 # Install / runtime directory
 JEDI_SETV_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
