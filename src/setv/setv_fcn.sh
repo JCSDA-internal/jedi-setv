@@ -19,7 +19,7 @@ function _setvcomplete_()
     local xpat='${word}'
 
     # virtual environment names
-    local names=$(ls -l "${SETV_VIRTUAL_ENV_PATH}" | egrep '^d' | awk -F " " '{print $NF}') 
+    local names=$(ls -l "${SETV_VIRTUAL_ENV_DIR}" | egrep '^d' | awk -F " " '{print $NF}') 
 
     # bash built-in 'compgen' generates the results
     COMPREPLY=($(compgen -W "$names" -X "$xpat" -- "$word"))
@@ -31,6 +31,7 @@ function _setv_help_() {
     echo Optional arguments:
     echo -e "-h       help (show this information)"
     echo -e "-l       list available virtual environments\n"
+    echo -e "-H <dir> specify virtual environment location"
     echo -e "-c NAME  create new virtual environment 'NAME'"
     echo -e "-a NAME  activate virtual enrvironment 'NAME'"
     echo -e "-p NAME  [ -r <requirements file>]  populate virtual environment 'NAME'"
@@ -63,41 +64,41 @@ function _setv_invenv()
 # Creates a new virtual environment
 function _setv_create()
 {
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 2 | sed "s/^ //g"`"
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
     if [ -z $1 ]; then
-        echo "$func: no name provided to create a virtual environment"
+        echo "$prog: $func: no name provided to create a virtual environment"
         return $setv_fail
-    elif [ ! -d $SETV_VIRTUAL_ENV_PATH/$1 ]; then
-        echo "$func: new virtual environment '$1' at $SETV_VIRTUAL_ENV_PATH"
+    elif [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+        echo "$prog: $func: new virtual environment '$1' at $SETV_VIRTUAL_ENV_DIR"
 
         # for python >= v3.9, upgrade dependencies (pip, setuptools) in place with '--upgrade-deps'
         _upgrade_deps=""
         [ "$_version_check" -eq "1" ] && _upgrade_deps="--upgrade-deps"
-        python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_PATH/$1
-        echo "$func: successfully created virtual environment '$1'" ; echo
+        python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$1
+        echo "$prog: $func: successfully created virtual environment '$1'" ; echo
     else
-        echo "$func: virtual environment $SETV_VIRTUAL_ENV_PATH/$1 already exists."
+        echo "$prog: $func: virtual environment $SETV_VIRTUAL_ENV_DIR/$1 already exists."
     fi
 }
 
 # Activates a new virtual environment
 function _setv_activate()
 {
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 2 | sed "s/^ //g"`"
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
     if [ -z $1 ]; then
-        echo "$func: must specify a virtual environment to activate"
+        echo "$prog: $func: must specify a virtual environment to activate"
         return $setv_fail
     fi
 
-    if [ -d $SETV_VIRTUAL_ENV_PATH/$1 ]; then
-        echo "$func: activating virtual environment 'name': $1"
-        source ${SETV_VIRTUAL_ENV_PATH}/${1}/bin/activate
-        echo "$func: successfully activated virtual environment '$1'" ; echo
+    if [ -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+        echo "$prog: $func: activating virtual environment 'name': $1"
+        source ${SETV_VIRTUAL_ENV_DIR}/${1}/bin/activate
+        echo "$prog: $func: successfully activated virtual environment '$1'" ; echo
         _setv_invenv
     else
-        echo "$func: virtual environment '$SETV_VIRTUAL_ENV_PATH/$1' doesn't exist; create it first"
+        echo "$prog: $func: virtual environment '$SETV_VIRTUAL_ENV_DIR/$1' doesn't exist; create it first"
         return $setv_fail
     fi
 }
@@ -105,26 +106,26 @@ function _setv_activate()
 # Deactivate a virtual environment
 function _setv_deactivate()
 {
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 2 | sed "s/^ //g"`"
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
     if [ -z $1 ]; then
-        echo "$func: specify a virtual environment to deactivate"
+        echo "$prog: $func: specify a virtual environment to deactivate"
         return $setv_fail
     fi
 
     # no virtual environment with specified name
-    if [ ! -d $SETV_VIRTUAL_ENV_PATH/$1 ]; then
-        echo "$func: no virtual environment named '$1'"
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+        echo "$prog: $func: no virtual environment named '$1'"
         return $setv_fail
     fi
 
     _setv_invenv
     if [ $INVENV == 1 ]; then
-        echo "$func: deactivating virtual environment '$1'"
+        echo "$prog: $func: deactivating virtual environment '$1'"
         deactivate
         _setv_invenv
     else
-        echo "$func: no active virtual environment"
+        echo "$prog: $func: no active virtual environment"
         return $setv_fail
     fi
 }
@@ -146,19 +147,19 @@ function _setv_rqmts_file()
 # Populate a virtual environment with specified packages
 function _setv_populate()
 {
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 2 | sed "s/^ //g"`"
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
     if [ -z $1 ]; then
-        echo "$func: must specify a virtual environment to populate"
+        echo "$prog: $func: must specify a virtual environment to populate"
         return $setv_fail
     fi
 
     # virtual environment must exist first
-    if [ ! -d ${SETV_VIRTUAL_ENV_PATH}/${1} ]; then
-        echo "$func: no virtual environment named '${1}', create and activate it first"
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+        echo "$prog: $func: no virtual environment named '${1}', create and activate it first"
         return $setv_fail
     elif [ $INVENV == 1 ]; then
-        echo "$func: populating virtual environment '$1'"
+        echo "$prog: $func: populating virtual environment '$1'"
         _rqmt_file=${_rqmt_file:-$RQMT_FILE}
         echo "   ...using requirements file '$_rqmt_file'"
         echo "   ...installing required python packages"
@@ -166,7 +167,7 @@ function _setv_populate()
         echo ; echo "Installed packages:" 
         pip3 list
     else
-        echo "$func: virtual environment '$SETV_VIRTUAL_ENV_PATH/$1' must be activated before populating it"
+        echo "$prog: $func: virtual environment '$SETV_VIRTUAL_ENV_DIR/$1' must be activated before populating it"
         return $setv_fail
     fi
 
@@ -177,22 +178,22 @@ function _setv_populate()
 # Deletes a virtual environment
 function _setv_delete()
 {
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 2 | sed "s/^ //g"`"
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
 
-    if [ -z ${1} ]; then
+    if [ -z $1 ]; then
 
-        echo "$func: no virtual environment specified to delete"
+        echo "$prog: $func: no virtual environment specified to delete"
         return $setv_fail
     else
-        if [ -d $SETV_VIRTUAL_ENV_PATH/$1 ]; then
+        if [ -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
             while true; do
                 read -p "Really delete virtual environment '$1' (y/N)? " yes_no
                 case $yes_no in
                     y | Y)
                             _setv_deactivate $1 &> /dev/null
-                            rm -rf $SETV_VIRTUAL_ENV_PATH/$1
+                            rm -rf $SETV_VIRTUAL_ENV_DIR/$1
                             _setv_invenv
-                            echo "$func: virtual environment '$1' deleted"
+                            echo "$prog: $func: virtual environment '$1' deleted"
                             break
                             ;;
                     n | N) 
@@ -204,7 +205,7 @@ function _setv_delete()
                 esac
             done
         else
-            echo "$func: no virtual environment named '$1'"
+            echo "$prog: $func: no virtual environment named '$1'"
             return $setv_fail
         fi
     fi
@@ -212,11 +213,26 @@ function _setv_delete()
    _setv_resetPrompt
 }
 
+# Set / reset SETV_VIRTUAL_ENV_DIR
+function _setv_Home()
+{
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+
+    if [ -z $1 ]; then
+        echo "$prog: $prog: $func: specify a virtual environment home location"
+        return $setv_fail
+    else
+        echo "$prog: $prog: $func: creating virtual environment home location '$1'"
+        mkdir -pv $1
+        export SETV_VIRTUAL_ENV_DIR=$1
+    fi
+}
+
 # Lists all virtual environments
 function _setv_list()
 {
-    echo -e "Virtual environments available in ${SETV_VIRTUAL_ENV_PATH}:\n"
-    for venv in $(ls -l "${SETV_VIRTUAL_ENV_PATH}" | egrep '^d' | awk -F " " '{print $NF}')
+    echo -e "Virtual environments available in ${SETV_VIRTUAL_ENV_DIR}:\n"
+    for venv in $(ls -l "${SETV_VIRTUAL_ENV_DIR}" | egrep '^d' | awk -F " " '{print $NF}')
     do
         echo $venv
     done
@@ -226,6 +242,7 @@ export -f _setv_activate
 export -f _setv_create
 export -f _setv_deactivate
 export -f _setv_delete
+export -f _setv_Home
 export -f _setv_help_
 export -f _setv_populate
 export -f _setv_list

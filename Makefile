@@ -14,4 +14,6 @@ install:
 	$(shell mkdir -p $(BINDIR)/bin)
 	@for f in $(SETV_FILES); do cp $(SETV_SRC_DIR)/$${f} $(BINDIR)/bin/$${f}; done
 
+	$(shell ln -s $(BINDIR)/bin/setv.sh $(BINDIR)/bin/setv)
+	
 .PHONY: install

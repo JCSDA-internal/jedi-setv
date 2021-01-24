@@ -14,8 +14,13 @@ setv_fail=255
 
 set +e
 
+export prog="${BASH_SOURCE[0]}"
+
 # Install / runtime directory
 JEDI_SETV_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Default virtual environment directory; set if other than $HOME is desired
+SETV_VIRTUAL_ENV_DIR=${SETV_VIRTUAL_ENV_DIR:-$HOME}
 
 # Default python version to use
 SETV_PY_PATH=$(which python3)
@@ -27,9 +32,9 @@ _version_check=`echo "$python_dot_version >= $min_python_version" | bc`
 [ "$_version_check" -eq "1" ] || (echo "Must have a python version >= 3.5" && return)
 _version=`echo "$python_dot_version == 3.9" | bc`
 
-# Requirements file definitions; default value is set in the setv module file
+# Requirements file definitions; value is set in the setv module file, else ./requirements.txt is assumed
 DEFAULT_RQMTS=requirements.txt
-RQMT_FILE=$SETV_DEFAULT_RQMTS_FILE
+RQMT_FILE=${SETV_RQMTS_FILE:-$DEFAULT_RQMTS}
 _rqmt_file=""
 
 # Keep initial prompt; used to reset when a venv is deactivated or deleted
@@ -59,10 +64,10 @@ function setv() {
         _setv_help_
     fi
 
-    while getopts "a:c:p:d:D:N:lh" opt; do
+    while getopts "a:c:p:d:D:H:N:lh" opt; do
         case $opt in
             a)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: activate: missing venv NAME"
+                    echo "$prog: $func: activate: missing venv NAME"
                     return
                 else
                     _setv_activate $OPTARG
@@ -70,7 +75,7 @@ function setv() {
                 ;;
 
             c)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: create: missing venv NAME"
+                    echo "$prog: $func: create: missing venv NAME"
                     return
                 else
                     _setv_create $OPTARG
@@ -78,7 +83,7 @@ function setv() {
                 ;;
 
             p)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: populate: missing venv NAME"
+                    echo "$prog: $func: populate: missing venv NAME"
                     return
                 else
                     args=("$@")
@@ -90,7 +95,7 @@ function setv() {
                 ;;
 
             d)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: deactivate: missing venv NAME"
+                    echo "$prog: $func: deactivate: missing venv NAME"
                     return
                 else
                     _setv_deactivate $OPTARG
@@ -98,10 +103,18 @@ function setv() {
                 ;;
 
             D) if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: Delete: missing venv NAME"
+                    echo "$prog: $func: Delete: missing venv NAME"
                     return
                 else
                     _setv_delete $OPTARG
+                fi
+                ;;
+
+            H) if ! _setv_checkArg $OPTARG ; then
+                    echo "$prog: $func: Home: missing venv home directory"
+                    return
+                else
+                    _setv_Home $OPTARG
                 fi
                 ;;
 
@@ -112,7 +125,7 @@ function setv() {
                 ;;
 
             N)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$func: New: missing venv NAME"
+                    echo "$prog: $func: New: missing venv NAME"
                     return
                 else
                     _setv_create $OPTARG
@@ -141,5 +154,3 @@ function setv() {
 # options that complete does but it generates results rather than just
 # storing the rules for future use.
 complete  -F _setvcomplete_ setv
-
-# setv $@
