@@ -9,7 +9,7 @@ Python virtual environment (venv) tools
   * you may wish to unset other modules (set to `=N`)
 * `build_stack.sh <config>`
 
-* module load setv
-* export SETV_VIRTUAL_ENV_DIR=\<path to where virtual envs will be created\>
+* `module load setv`
+* `export SETV_VIRTUAL_ENV_DIR=\<path to where virtual envs will be created\>`
   * defaults to `$HOME`
 * `setv -h`
