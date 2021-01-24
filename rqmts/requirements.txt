@@ -20,5 +20,3 @@ xarray >= 0.16.2
 netcdf4 >= 1.5.5.1 --prefer-binary
 h5netcdf >= 0.8.1 --prefer-binary
 h5py >= 3.1.0 --prefer-binary
-
--r ewok.requirements.txt
