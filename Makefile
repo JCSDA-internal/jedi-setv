@@ -2,7 +2,7 @@
 # BINDIR is passed when invoking 'make'
 
 SETV_SRC_DIR = src/setv
-SETV_FILES = setv.sh setv_fcn.sh
+SETV_FILES = setv_main.sh setv_fcn.sh
 
 SETV_RQMT_DIR=rqmts
 SETV_RQMT_FILE=requirements.txt
@@ -14,6 +14,6 @@ install:
 	$(shell mkdir -p $(BINDIR)/bin)
 	@for f in $(SETV_FILES); do cp $(SETV_SRC_DIR)/$${f} $(BINDIR)/bin/$${f}; done
 
-	$(shell ln -s $(BINDIR)/bin/setv.sh $(BINDIR)/bin/setv)
-	
+	$(shell ln -s $(BINDIR)/bin/setv_main.sh $(BINDIR)/bin/setV)
+
 .PHONY: install
