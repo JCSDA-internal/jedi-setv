@@ -190,7 +190,7 @@ function _setv_delete()
                 read -p "Really delete virtual environment '$1' (y/N)? " yes_no
                 case $yes_no in
                     y | Y)
-                            _setv_deactivate $1 &> /dev/null
+                            [[ $INVENV == 1 ]] && _setv_deactivate $1 &> /dev/null
                             rm -rf $SETV_VIRTUAL_ENV_DIR/$1
                             _setv_invenv
                             echo "$prog: $func: virtual environment '$1' deleted"
