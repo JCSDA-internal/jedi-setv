@@ -17,10 +17,6 @@ set +e
 # Install / runtime directory
 JEDI_SETV_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Default path to virtual environment directory; override default by setting appropriate environment variable
-DEFAULT_VIRTUAL_ENV_PATH=$HOME/venv
-SETV_VIRTUAL_ENV_PATH=${SETV_VIRTUAL_ENV_PATH:-$DEFAULT_VIRTUAL_ENV_PATH}
-
 # Default python version to use
 SETV_PY_PATH=$(which python3)
 python_dot_version=$($SETV_PY_PATH -c 'import sys;print(sys.version_info[0],".",sys.version_info[1],sep="")')
@@ -31,9 +27,9 @@ _version_check=`echo "$python_dot_version >= $min_python_version" | bc`
 [ "$_version_check" -eq "1" ] || (echo "Must have a python version >= 3.5" && return)
 _version=`echo "$python_dot_version == 3.9" | bc`
 
-# Requirements file definitions
+# Requirements file definitions; default value is set in the setv module file
 DEFAULT_RQMTS=requirements.txt
-RQMT_FILE=${JEDI_SETV_DIR}/${DEFAULT_RQMTS}
+RQMT_FILE=$SETV_DEFAULT_RQMTS_FILE
 _rqmt_file=""
 
 # Keep initial prompt; used to reset when a venv is deactivated or deleted
