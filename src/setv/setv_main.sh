@@ -65,7 +65,7 @@ function setv() {
         _setv_help_
     fi
 
-    while getopts "a:c:p:d:D:V:N:lh" opt; do
+    while getopts "a:c:p:d:D:H:N:lh" opt; do
         case $opt in
             a)  if ! _setv_checkArg $OPTARG ; then
                     echo "$prog: $func: activate: missing venv NAME"
