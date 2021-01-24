@@ -34,7 +34,7 @@ _version=`echo "$python_dot_version == 3.9" | bc`
 
 # Requirements file definitions; value is set in the setv module file, else ./requirements.txt is assumed
 DEFAULT_RQMTS=requirements.txt
-RQMT_FILE=${SETV_RQMTS_FILE:-$DEFAULT_RQMTS}
+RQMT_FILE=${SETV_DEFAULTRQMTS_FILE:-$DEFAULT_RQMTS}
 _rqmt_file=""
 
 # Keep initial prompt; used to reset when a venv is deactivated or deleted
