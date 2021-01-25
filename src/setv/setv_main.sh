@@ -30,6 +30,7 @@ python_dot_version=$(python3 -c 'import sys;print(sys.version_info[0],".",sys.ve
 min_python_version=3.6
 _version_check=`echo "$python_dot_version >= $min_python_version" | bc`
 [ "$_version_check" -eq "1" ] || (echo "Must have a python version >= 3.5" && return)
+_version=`echo "$python_dot_version == 3.9" | bc`
 
 # Requirements file definitions; value is set in the setv module file, else ./requirements.txt is assumed
 DEFAULT_RQMTS=requirements.txt

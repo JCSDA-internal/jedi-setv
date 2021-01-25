@@ -74,7 +74,10 @@ function _setv_create()
 
         # for python >= v3.9, upgrade dependencies (pip, setuptools) in place with '--upgrade-deps'
         _upgrade_deps=""
-        [ "$_version_check" -eq "1" ] && _upgrade_deps="--upgrade-deps"
+        if [ $_version == 1 ]; then
+              _upgrade_deps="--upgrade-deps"
+        fi
+
         python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$1
         echo "$prog: $func: successfully created virtual environment '$1'" ; echo
     else
@@ -160,6 +163,8 @@ function _setv_populate()
         return $setv_fail
     elif [ $INVENV == 1 ]; then
         echo "$prog: $func: populating virtual environment '$1'"
+        pip install --upgrade pip
+        
         _rqmt_file=${_rqmt_file:-$RQMT_FILE}
         echo "   ...using requirements file '$_rqmt_file'"
         echo "   ...installing required python packages"
