@@ -24,13 +24,12 @@ SETV_VIRTUAL_ENV_DIR=${SETV_VIRTUAL_ENV_DIR:-$HOME}
 
 # Default python version to use
 SETV_PY_PATH=$(which python3)
-python_dot_version=$($SETV_PY_PATH -c 'import sys;print(sys.version_info[0],".",sys.version_info[1],sep="")')
+python_dot_version=$(python3 -c 'import sys;print(sys.version_info[0],".",sys.version_info[1],sep="")')
 
-# Support python 3.x only, and >= 3.5
-min_python_version=3.5
+# Support python 3.x only, and >= 3.6
+min_python_version=3.6
 _version_check=`echo "$python_dot_version >= $min_python_version" | bc`
 [ "$_version_check" -eq "1" ] || (echo "Must have a python version >= 3.5" && return)
-_version=`echo "$python_dot_version == 3.9" | bc`
 
 # Requirements file definitions; value is set in the setv module file, else ./requirements.txt is assumed
 DEFAULT_RQMTS=requirements.txt
