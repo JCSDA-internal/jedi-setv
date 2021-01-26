@@ -33,16 +33,20 @@ _version_check=`echo "$python_dot_version >= $min_python_version" | bc`
 _version=`echo "$python_dot_version == 3.9" | bc`
 
 # Requirements file definitions; value is set in the setv module file, else ./requirements.txt is assumed
-DEFAULT_RQMTS=requirements.txt
-RQMT_FILE=${SETV_DEFAULT_RQMTS_FILE:-$DEFAULT_RQMTS}
+# DEFAULT_RQMTS=requirements.txt
+# RQMT_FILE=${SETV_DEFAULT_RQMTS_FILE:-$DEFAULT_RQMTS}
+RQMT_FILE=${SETV_DEFAULT_RQMTS_FILE}
 _rqmt_file=""
-
-# Keep initial prompt; used to reset when a venv is deactivated or deleted
-old_PS1=$PS1
 
 # Initialize helper functions
 source "${JEDI_SETV_DIR}/setv_fcn.sh"
 
+# Current venv
+_curr_venv=${VIRTUAL_ENV:-""}
+
+#
+# Main function
+#
 function setv() {
     #
     # Options:
@@ -54,6 +58,7 @@ function setv() {
     # d: deactivate a venv
     # D: delete a venv
     # N: create / activate populate a venv
+    # C: clone an existing venv
     # l: list available venvs
     # h: help / usage
     #
@@ -65,7 +70,7 @@ function setv() {
         _setv_help_
     fi
 
-    while getopts "a:c:p:d:D:H:N:lh" opt; do
+    while getopts "a:c:p:d:D:H:N:C:lh" opt; do
         case $opt in
             a)  if ! _setv_checkArg $OPTARG ; then
                     echo "$prog: $func: activate: missing venv NAME"
@@ -139,10 +144,21 @@ function setv() {
                 fi
                 ;;
 
+            C)  if ! _setv_checkArg $OPTARG ; then
+                    echo "$prog: $func: New: missing venv NAME"
+                    return
+                else
+                    args=("$@")
+                    clone="${args[2]}"
+                    _setv_clone $OPTARG $clone
+                    return
+                fi
+                ;;                
+
             \?) _setv_help_
                 ;;
 
-            -*) _setv_help_
+            *)  _setv_help_
                 ;;
         esac
     done
