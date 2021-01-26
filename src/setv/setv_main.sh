@@ -73,7 +73,7 @@ function setv() {
     while getopts "a:c:p:d:D:H:N:C:lh" opt; do
         case $opt in
             a)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: activate: missing venv NAME"
+                    echo "$prog: $func: activate: missing venv"
                     return
                 else
                     _setv_activate $OPTARG
@@ -81,7 +81,7 @@ function setv() {
                 ;;
 
             c)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: create: missing venv NAME"
+                    echo "$prog: $func: create: missing venv"
                     return
                 else
                     _setv_create $OPTARG
@@ -89,7 +89,7 @@ function setv() {
                 ;;
 
             p)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: populate: missing venv NAME"
+                    echo "$prog: $func: populate: missing venv"
                     return
                 else
                     args=("$@")
@@ -101,7 +101,7 @@ function setv() {
                 ;;
 
             d)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: deactivate: missing venv NAME"
+                    echo "$prog: $func: deactivate: missing venv"
                     return
                 else
                     _setv_deactivate $OPTARG
@@ -109,7 +109,7 @@ function setv() {
                 ;;
 
             D) if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: Delete: missing venv NAME"
+                    echo "$prog: $func: Delete: missing venv"
                     return
                 else
                     _setv_delete $OPTARG
@@ -131,7 +131,7 @@ function setv() {
                 ;;
 
             N)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: New: missing venv NAME"
+                    echo "$prog: $func: New: missing venv"
                     return
                 else
                     _setv_create $OPTARG
@@ -145,7 +145,7 @@ function setv() {
                 ;;
 
             C)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: New: missing venv NAME"
+                    echo "$prog: $func: New: missing venv"
                     return
                 else
                     args=("$@")

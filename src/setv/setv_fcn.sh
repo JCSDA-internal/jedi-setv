@@ -27,18 +27,18 @@ function _setvcomplete_()
 
 function _setv_help_() {
     echo
-    echo "Usage: setv [options] [NAME]"
+    echo "Usage: setv options <venv>"
     echo Optional arguments:
     echo -e "-h       help (show this information)"
     echo -e "-l       list available virtual environments\n"
     echo -e "-H <dir>     specify virtual environment home location"
-    echo -e "-c NAME      create new virtual environment 'NAME'"
-    echo -e "-a NAME      activate virtual enrvironment 'NAME'"
-    echo -e "-p NAME [ -r <requirements file>]  populate virtual environment 'NAME'"
-    echo -e "-N NAME      create / activate / populate NAME"
-    echo -e "-C NAME NEW  clone virtual environment 'NAME' into 'NEW'"
-    echo -e "-d NAME      deactivate currently active virtual environment 'NAME'"
-    echo -e "-D NAME      delete virtual environment 'NAME'"
+    echo -e "-c <venv>      create new virtual environment '<venv>'"
+    echo -e "-a <venv>      activate virtual enrvironment '<venv>'"
+    echo -e "-p <venv> [ -r <requirements file>]  populate virtual environment '<venv>'"
+    echo -e "-N <venv>      create / activate / populate <venv>"
+    echo -e "-C <venv> <new-venv>  clone virtual environment '<venv>' into '<new-venv>'"
+    echo -e "-d <venv>      deactivate currently active virtual environment '<venv>'"
+    echo -e "-D <venv>      delete virtual environment 'NAME'"
 }
 
 # Check for missing venv NAME for commands that require it
@@ -103,7 +103,7 @@ function _setv_activate()
         fi
 
         echo -ne "$prog: $func: activating venv 'name': $1..."
-        source ${SETV_VIRTUAL_ENV_DIR}/${1}/bin/activate && echo " done"
+        source ${SETV_VIRTUAL_ENV_DIR}/${1}/bin/activate && echo " done" && echo
         _setv_invenv
     else
         echo "$prog: $func: venv '$SETV_VIRTUAL_ENV_DIR/$1' doesn't exist; create it first"
