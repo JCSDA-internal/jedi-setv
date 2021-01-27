@@ -70,100 +70,186 @@ function setv() {
         _setv_help_
     fi
 
-    while getopts "a:c:p:d:D:H:N:C:lh" opt; do
-        case $opt in
-            a)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: activate: missing venv"
+    while [[ "$#" -gt 0 ]]; do
+        echo $@
+        case "$1" in
+            -h | --help)
+                _setv_help_
+                return
+                ;;
+
+            -l| --list)
+                _setv_list
+                return
+                ;;
+
+            -a | --activate)
+                if ! _setv_checkArg $2 ; then
+                    echo "$prog: activate: missing venv"
+                    # shift
                     return
                 else
-                    _setv_activate $OPTARG
+                    venv=$2
+                    _setv_activate $venv
+                    shift 2
                 fi
                 ;;
 
-            c)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: create: missing venv"
+            -d | --deactivate)
+                if ! _setv_checkArg $2 ; then
+                    echo "$prog: deactivate: missing venv"
+                    # shift
                     return
                 else
-                    _setv_create $OPTARG
+                    venv=$2
+                    _setv_deactivate $venv
+                    shift 2
                 fi
                 ;;
 
-            p)  if ! _setv_checkArg $OPTARG ; then
+            -c | --create) 
+                if ! _setv_checkArg $2 ; then
+                    echo "$prog: create: missing venv"
+                    # shift
+                    return
+                else
+                    venv=$2
+                    _setv_create $venv
+                    shift 2
+                fi
+                ;;
+
+            -D | --delete)
+                if ! _setv_checkArg $2 ; then
+                    echo "$prog: delete: missing venv"
+                    # shift
+                    return
+                else
+                    _setv_delete $2
+                    shift 2
+                fi
+                ;;
+
+            -p | --populate)
+                if ! _setv_checkArg $2 ; then
                     echo "$prog: $func: populate: missing venv"
+                    shift
                     return
                 else
+                    venv=$2
+                    echo venv: $venv
+                    shift
                     args=("$@")
+                    echo args: $args
                     _setv_rqmts_file $@
-
-                    _setv_populate $OPTARG $_rqmt_file
-                    [[ ${#args[@]} -ge 2 ]] && shift 2
+                    echo rqmtsFile: $_rqmt_file
+                    _setv_populate $venv $_rqmt_file
+                    echo done: $args and  $@
+                    shift
+                    # [[ ${#args[@]} -ge 2 ]] && shift 2
                 fi
                 ;;
 
-            d)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: deactivate: missing venv"
-                    return
+            -i | --install)
+                echo $2 $3 $4
+                echo $@
+                if [ "$2" == "--package" ]; then
+                    _rqmt_file=$3
+                    venv=$4
+                    shift 4
                 else
-                    _setv_deactivate $OPTARG
+                    venv=$2
+                    shift 2
                 fi
+
+                # if ! _setv_checkArg $2 ; then
+                #     echo "$prog: $install: missing venv"
+                #     return
+                # else
+                    # venv=$2
+                    _setv_create $venv
+                    _setv_activate $venv
+
+                    # shift 2
+                    # echo rest of args: $@
+                    # args=("$@")
+                    # _setv_rqmts_file $@
+                    # echo rqmts: $_rqmt_file
+                    _setv_populate $venv $_rqmt_file
+                    # [[ ${#args[@]} -ge 2 ]] && shift 2
+                # fi
                 ;;
 
-            D) if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: Delete: missing venv"
-                    return
+           -u | --update)
+                echo $2 $3 $4
+                echo $@
+                if [ "$2" == "--package" ]; then
+                    _rqmt_file=$3
+                    venv=$4
+                    shift 4
                 else
-                    _setv_delete $OPTARG
+                    venv=$2
+                    shift 2
                 fi
-                ;;
 
-            H) if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: Home: missing venv home directory"
+                if ! _setv_venv_exists $venv ; then
+                    echo checked for existence
                     return
-                else
-                    _setv_Home $OPTARG
                 fi
+
+                echo "if here, populate $venv with file $_rqmt_file"
+
+                # if ! _setv_checkArg $2 ; then
+                #     echo "$prog: $install: missing venv"
+                #     return
+                # else
+                    # venv=$2
+                    # _setv_create $venv
+                    # _setv_activate $venv
+
+                    # shift 2
+                    # echo rest of args: $@
+                    # args=("$@")
+                    # _setv_rqmts_file $@
+                    # echo rqmts: $_rqmt_file
+                    _setv_populate $venv $_rqmt_file
+                    # [[ ${#args[@]} -ge 2 ]] && shift 2
+                # fi
                 ;;
 
-            l)  _setv_list
-                ;;
-
-            h) _setv_help_
-                ;;
-
-            N)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: New: missing venv"
+            -C | --clone)  
+                if ! _setv_checkArg $2 ; then
+                    echo "$prog: $func: missing venv"
                     return
                 else
-                    _setv_create $OPTARG
-                    _setv_activate $OPTARG
-
-                    args=("$@")
-                    _setv_rqmts_file $@
-                    _setv_populate $OPTARG $_rqmt_file
-                    [[ ${#args[@]} -ge 2 ]] && shift 2
-                fi
-                ;;
-
-            C)  if ! _setv_checkArg $OPTARG ; then
-                    echo "$prog: $func: New: missing venv"
-                    return
-                else
+                    venv=$2
                     args=("$@")
                     clone="${args[2]}"
-                    _setv_clone $OPTARG $clone
+                    echo clone is $clone
+                    _setv_clone $venv $clone
                     return
                 fi
-                ;;                
-
-            \?) _setv_help_
-                ;;
-
-            *)  _setv_help_
-                ;;
+                ;; 
+            *)
+                echo "everything else: $@"
+                return
+            
+            
+            #    if [ -d ${SETV_VIRTUAL_ENV_PATH}/${1} ];
+            #    then
+            #        # if it exists, activate the virtual environment
+            #        source ${SETV_VIRTUAL_ENV_PATH}/${1}/bin/activate
+            #        cd ${SETV_VIRTUAL_ENV_PATH}/${1}
+            #     #    _setv_populate
+            #    else
+            #        # no virtual environment with specified name
+            #        echo "no virtual environment with the name: ${1}"
+            #        _setv_help_
+            #    fi
+               ;;
         esac
     done
 
-    shift $((OPTIND -1))
     return
 }
 

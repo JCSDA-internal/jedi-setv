@@ -39,14 +39,24 @@ function _setv_help_() {
     echo -e "-C <venv> <new-venv>  clone virtual environment '<venv>' into '<new-venv>'"
     echo -e "-d <venv>      deactivate currently active virtual environment '<venv>'"
     echo -e "-D <venv>      delete virtual environment 'NAME'"
+
+    sleep 2
 }
 
 # Check for missing venv NAME for commands that require it
 function _setv_checkArg()
 {
+    # missing argument
+    if [[ -z $1 ]]; then
+        return $setv_fail
+    fi
+
+    # argument starts with a '-' ==> command switch
     if [[ "$1" =~ ^- ]]; then
         return $setv_fail
     fi
+    
+    return
 }
 
 # Determine whether or not a venv is active
@@ -57,6 +67,15 @@ function _setv_invenv()
     [[ ! -z $VIRTUAL_ENV && $INVENV -eq 1 ]] && _curr_venv=`basename $VIRTUAL_ENV` || _curr_venv=""
 }
 
+function _setv_venv_exists()
+{
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+        echo "$prog: $func: no venv named '$1', create and activate it first"
+        return $setv_fail
+    fi
+}
 # Creates a new virtual environment
 function _setv_create()
 {
@@ -178,8 +197,8 @@ function _setv_populate()
 
         _rqmt_file=${_rqmt_file:-$RQMT_FILE}
         if [ -n "${_rqmt_file}" ]; then
-            echo "   ...using requirements file '$_rqmt_file'"
-            echo "   ...installing required python packages"
+            echo "   $func: ...using requirements file '$_rqmt_file'"
+            echo "   $func: ...installing required python packages"
             pip3 install --no-cache-dir -r $_rqmt_file
         fi
 
@@ -311,6 +330,7 @@ export -f _setv_populate
 export -f _setv_clone
 export -f _setv_list
 export -f _setv_invenv
+export -f _setv_venv_exists
 export -f _setv_checkArg
 export -f _setv_rqmts_file
 
