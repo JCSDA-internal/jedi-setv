@@ -9,7 +9,7 @@ SETV_RQMT_FILES = requirements.txt ewok.requirements.txt r2d2.requirements.txt
 
 install:
 	$(shell mkdir -p $(INSTALLDIR)/share)
-	@for f in $(SETV_RQMT_FILE); do cp $(SETV_RQMT_DIR)/$${f} $(INSTALLDIR)/share/$${f}; done
+	@for f in $(SETV_RQMT_FILES); do cp $(SETV_RQMT_DIR)/$${f} $(INSTALLDIR)/share/$${f}; done
 
 	$(shell mkdir -p $(INSTALLDIR)/bin)
 	@for f in $(SETV_FILES); do cp $(SETV_SRC_DIR)/$${f} $(INSTALLDIR)/bin/$${f}; done
