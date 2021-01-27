@@ -199,7 +199,7 @@ function _setv_populate()
         echo "$prog: $func: populating venv '$venv'"
         pip install --upgrade pip
 
-        _rqmt_file=${_rqmt_file:-$RQMT_FILE}
+        pip3 install --no-cache-dir -r $RQMT_FILE
         if [ -n "${_rqmt_file}" ]; then
             echo "   $func: ...using requirements file '$_rqmt_file'"
             echo "   $func: ...installing required python packages"
