@@ -1,0 +1,2 @@
+git+https://github.com/jcsda-internal/solo.git
+git+https://github.com/jcsda-internal/r2d2.git
