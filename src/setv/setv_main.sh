@@ -63,16 +63,18 @@ function setv() {
     # h: help / usage
     #
 
-    local OPTIND opt
-    local func=${FUNCNAME[0]}
+    local opt args
 
     if [[ $# -eq 0 ]]; then
         _setv_help_
     fi
 
-    while [[ "$#" -gt 0 ]]; do
-        echo $@
-        case "$1" in
+    while [[ $# -gt 0 ]]; do
+        args=$@
+        opt=$1
+        echo args: $args
+        echo opt: $opt
+        case "$opt" in
             -h | --help)
                 _setv_help_
                 return
@@ -119,7 +121,7 @@ function setv() {
                 fi
                 ;;
 
-            -D | --delete)
+            -D | --Delete)
                 if ! _setv_checkArg $2 ; then
                     echo "$prog: delete: missing venv"
                     # shift
@@ -132,120 +134,112 @@ function setv() {
 
             -p | --populate)
                 if ! _setv_checkArg $2 ; then
-                    echo "$prog: $func: populate: missing venv"
+                    echo "$prog: populate: missing venv"
                     shift
                     return
                 else
                     venv=$2
-                    echo venv: $venv
                     shift
-                    args=("$@")
-                    echo args: $args
                     _setv_rqmts_file $@
-                    echo rqmtsFile: $_rqmt_file
                     _setv_populate $venv $_rqmt_file
-                    echo done: $args and  $@
-                    shift
-                    # [[ ${#args[@]} -ge 2 ]] && shift 2
+                    shift 3
                 fi
                 ;;
 
             -i | --install)
-                echo $2 $3 $4
-                echo $@
-                if [ "$2" == "--package" ]; then
-                    _rqmt_file=$3
-                    venv=$4
-                    shift 4
-                else
-                    venv=$2
-                    shift 2
-                fi
+                case $# in
+                    2) 
+                        # no rqmts file specified; install a basic venv
+                        venv=$2
+                        shift 2
+                        ;;
 
-                # if ! _setv_checkArg $2 ; then
-                #     echo "$prog: $install: missing venv"
-                #     return
-                # else
-                    # venv=$2
-                    _setv_create $venv
-                    _setv_activate $venv
+                    4)
+                        # rqmts file specified; install that in a venv
+                        _pArg=$2
+                        if [[ "$_pArg" == "-p" || "$_pArg" == "--package" ]]; then
+                            _rqmt_file=$3
+                            venv=$4
+                            shift 4
+                        else
+                            _setv_help_
+                            return
+                        fi
+                        ;;
 
-                    # shift 2
-                    # echo rest of args: $@
-                    # args=("$@")
-                    # _setv_rqmts_file $@
-                    # echo rqmts: $_rqmt_file
-                    _setv_populate $venv $_rqmt_file
-                    # [[ ${#args[@]} -ge 2 ]] && shift 2
-                # fi
+                    *) 
+                        _setv_help_
+                        return
+                        ;;
+                esac
+
+                echo "$prog: installing venv '$venv' at $SETV_VIRTUAL_ENV_DIR"
+                _setv_create $venv
+                _setv_activate $venv
+                _setv_populate $venv $_rqmt_file
                 ;;
 
            -u | --update)
-                echo $2 $3 $4
-                echo $@
-                if [ "$2" == "--package" ]; then
-                    _rqmt_file=$3
-                    venv=$4
-                    shift 4
-                else
-                    venv=$2
-                    shift 2
-                fi
+                case $# in
+                    2) 
+                        # no rqmts file specified; update a basic venv
+                        venv=$2
+                        shift 2
+                        ;;
+
+                    4)
+                        # rqmts file specified; update that in a venv
+                        _pArg=$2
+                        if [[ "$_pArg" == "-p" || "$_pArg" == "--package" ]]; then
+                            _rqmt_file=$3
+                            venv=$4
+                            shift 4
+                        else
+                            _setv_help_
+                            return
+                        fi
+                        ;;
+
+                    *) 
+                        _setv_help_
+                        return
+                        ;;
+                esac
 
                 if ! _setv_venv_exists $venv ; then
-                    echo checked for existence
+                    echo "$prog: venv '$venv' doesn't exist, install it first"
+                    _setv_help_
                     return
                 fi
 
-                echo "if here, populate $venv with file $_rqmt_file"
-
-                # if ! _setv_checkArg $2 ; then
-                #     echo "$prog: $install: missing venv"
-                #     return
-                # else
-                    # venv=$2
-                    # _setv_create $venv
-                    # _setv_activate $venv
-
-                    # shift 2
-                    # echo rest of args: $@
-                    # args=("$@")
-                    # _setv_rqmts_file $@
-                    # echo rqmts: $_rqmt_file
-                    _setv_populate $venv $_rqmt_file
-                    # [[ ${#args[@]} -ge 2 ]] && shift 2
-                # fi
+                echo "$prog: updating  venv '$venv' at $SETV_VIRTUAL_ENV_DIR"
+                # venv exists but not be active; if not in the desired venv, current venv will be deactivated
+                _setv_activate $venv
+                _setv_populate $venv $_rqmt_file
                 ;;
 
-            -C | --clone)  
-                if ! _setv_checkArg $2 ; then
-                    echo "$prog: $func: missing venv"
+            -C | --Clone)
+                case $# in
+                    2)
+                        venv=$2
+                        clone=$3
+                        echo venv is $venv, clone is $clone
+                        _setv_clone $venv $clone
+                        shift 2
+                        echo $@
+                        ;;
+
+                    *)
+                        echo "$prog: invalid command $prog $args"
+                        _setv_help_
                     return
-                else
-                    venv=$2
-                    args=("$@")
-                    clone="${args[2]}"
-                    echo clone is $clone
-                    _setv_clone $venv $clone
-                    return
-                fi
-                ;; 
+                esac
+                ;;
+
             *)
-                echo "everything else: $@"
+                echo "$prog $@ : invalid command"
+                _setv_help_
                 return
-            
-            
-            #    if [ -d ${SETV_VIRTUAL_ENV_PATH}/${1} ];
-            #    then
-            #        # if it exists, activate the virtual environment
-            #        source ${SETV_VIRTUAL_ENV_PATH}/${1}/bin/activate
-            #        cd ${SETV_VIRTUAL_ENV_PATH}/${1}
-            #     #    _setv_populate
-            #    else
-            #        # no virtual environment with specified name
-            #        echo "no virtual environment with the name: ${1}"
-            #        _setv_help_
-            #    fi
                ;;
         esac
     done
