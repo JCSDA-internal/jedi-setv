@@ -25,34 +25,36 @@ function _setvcomplete_()
     COMPREPLY=($(compgen -W "$names" -X "$xpat" -- "$word"))
 }
 
-function _setv_help_() {
+function _setv_help() {
     echo
     echo "Usage: setv options <venv>"
     echo Optional arguments:
-    echo -e "-h       help (show this information)"
-    echo -e "-l       list available virtual environments\n"
-    echo -e "-H <dir>     specify virtual environment home location"
-    echo -e "-c <venv>      create new virtual environment '<venv>'"
-    echo -e "-a <venv>      activate virtual enrvironment '<venv>'"
-    echo -e "-p <venv> [ -r <requirements file>]  populate virtual environment '<venv>'"
-    echo -e "-N <venv>      create / activate / populate <venv>"
-    echo -e "-C <venv> <new-venv>  clone virtual environment '<venv>' into '<new-venv>'"
-    echo -e "-d <venv>      deactivate currently active virtual environment '<venv>'"
-    echo -e "-D <venv>      delete virtual environment 'NAME'"
+    echo -e "  --help  help (show this information)"
+    echo -e "  --list  list available virtual environments\n"
 
-    sleep 2
+    echo -n "  --install [--package <pkg-file>] venv"
+        echo -e "  install (optionally from <pkg-file>) and activate 'venv'"
+    echo -n "  --update [--package <pkg-file>] venv"
+        echo -e "  update (optionally from <pkg-file>) 'venv'"
+    echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
+    echo -e "  --delete venv  delete virtual environment 'venv'"
+
+    echo -n "  --home <dir>  specify virtual environment home location"
+    echo -e " (current: $SETV_VIRTUAL_ENV_DIR)\n"
 }
 
 # Check for missing venv NAME for commands that require it
 function _setv_checkArg()
 {
+    local arg=$1
+
     # missing argument
-    if [[ -z $1 ]]; then
+    if [[ -z $arg ]]; then
         return $setv_fail
     fi
 
     # argument starts with a '-' ==> command switch
-    if [[ "$1" =~ ^- ]]; then
+    if [[ "$arg" =~ ^- ]]; then
         return $setv_fail
     fi
     
@@ -70,22 +72,22 @@ function _setv_invenv()
 function _setv_venv_exists()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local venv=$1
 
-    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
-        echo "$prog: $func: no venv named '$1', create and activate it first"
-        return $setv_fail
-    fi
+    [[ -d $SETV_VIRTUAL_ENV_DIR/$venv ]] && return $setv_fail
 }
+
 # Creates a new virtual environment
 function _setv_create()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local venv=$1
 
-    if [ -z $1 ]; then
+    if [ -z $venv ]; then
         echo "$prog: $func: no name provided to create a virtual environment"
         return $setv_fail
-    elif [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
-        echo "$prog: $func: new virtual environment '$1' at $SETV_VIRTUAL_ENV_DIR"
+    elif [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+        echo "$prog: $func: new virtual environment '$venv'"
 
         # for python >= v3.9, upgrade dependencies (pip, setuptools) in place with '--upgrade-deps'
         _upgrade_deps=""
@@ -93,10 +95,10 @@ function _setv_create()
               _upgrade_deps="--upgrade-deps"
         fi
 
-        python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$1
-        echo "$prog: $func: successfully created venv '$1'" ; echo
+        python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$venv
+        echo "$prog: $func: successfully created venv '$venv'" ; echo
     else
-        echo "$prog: $func: venv $SETV_VIRTUAL_ENV_DIR/$1 already exists."
+        echo "$prog: $func: venv '$venv' already exists."
     fi
 }
 
@@ -104,28 +106,29 @@ function _setv_create()
 function _setv_activate()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local venv=$1
 
-    if [ -z $1 ]; then
+    if [ -z $venv ]; then
         echo "$prog: $func: must specify a venv to activate"
         return $setv_fail
     fi
 
-    if [ -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+    if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
         if [ ! -z $_curr_venv ]; then
-            if [ "$1" != "$_curr_venv" ]; then
+            if [ "$venv" != "$_curr_venv" ]; then
                 echo -ne "$prog: $func: deactivating current venv ('$_curr_venv')..." && \
                 _setv_deactivate $_curr_venv >& /dev/null && echo " done"
             else
-                echo "$prog: $func: venv '$1' ($_curr_venv) is already active"
+                echo "$prog: $func: venv '$venv' ($_curr_venv) is already active"
                 return
             fi
         fi
 
-        echo -ne "$prog: $func: activating venv 'name': $1..."
-        source ${SETV_VIRTUAL_ENV_DIR}/${1}/bin/activate && echo " done" && echo
+        echo -ne "$prog: $func: activating venv '$venv'..."
+        source $SETV_VIRTUAL_ENV_DIR/$venv/bin/activate && echo -e " done\n"
         _setv_invenv
     else
-        echo "$prog: $func: venv '$SETV_VIRTUAL_ENV_DIR/$1' doesn't exist; create it first"
+        echo "$prog: $func: venv '$venv' doesn't exist; create it first"
         return $setv_fail
     fi
 }
@@ -134,26 +137,26 @@ function _setv_activate()
 function _setv_deactivate()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
-    # local _curr_venv=`basename $VIRTUAL_ENV`
+    local venv=$1
 
-    if [ -z $1 ]; then
+    if [ -z $venv ]; then
         echo "$prog: $func: specify a virtual environment to deactivate"
         return $setv_fail
     fi
 
     # no virtual environment with specified name
-    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
-        echo "$prog: $func: no venv named '$1'"
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+        echo "$prog: $func: no venv named '$venv'"
         return $setv_fail
     fi
 
     _setv_invenv
     if [ $INVENV == 1 ]; then
-        if [ $_curr_venv != $1 ]; then
+        if [ $_curr_venv != $venv ]; then
             echo "$prog: $func: only the currently active venv ('$_curr_venv') can be deactivated"
             return $setv_fail
         else
-            echo "$prog: $func: deactivating currently active venv '$1'"
+            echo "$prog: $func: deactivating currently active venv '$venv'"
             deactivate
             _setv_invenv
         fi
@@ -181,18 +184,19 @@ function _setv_rqmts_file()
 function _setv_populate()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local venv=$1
 
-    if [ -z $1 ]; then
+    if [ -z $venv ]; then
         echo "$prog: $func: must specify a venv to populate"
         return $setv_fail
     fi
 
     # virtual environment must exist first
-    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
         echo "$prog: $func: no venv named '${1}', create and activate it first"
         return $setv_fail
     elif [ $INVENV == 1 ]; then
-        echo "$prog: $func: populating venv '$1'"
+        echo "$prog: $func: populating venv '$venv'"
         pip install --upgrade pip
 
         _rqmt_file=${_rqmt_file:-$RQMT_FILE}
@@ -204,8 +208,9 @@ function _setv_populate()
 
         echo ; echo "Installed packages:" 
         pip3 list
+        echo
     else
-        echo "$prog: $func: venv '$SETV_VIRTUAL_ENV_DIR/$1' must be activated before populating it"
+        echo "$prog: $func: venv '$SETV_VIRTUAL_ENV_DIR/$venv' must be activated before populating it"
         return $setv_fail
     fi
 
@@ -217,27 +222,34 @@ function _setv_populate()
 function _setv_clone()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
-
-    [[ -z $1 || -z $2 ]] && echo ie "$prog: $func: clone venv not specified" && return $setv_fail
+    local venv=$1 clone=$2
 
     # can't clone to self
-    if [ "$1" == "$2" ]; then
+    if [ "$venv" == "$clone" ]; then
         echo "$prog: $func: cannot clone self: '$1' to '$2'"
         return $setv_fail
     fi
 
-    mkdir -p /tmp/$2 && pip3 freeze > /tmp/$2/requirements.txt
-    echo -n "$prog: $func: cloning venv '$1' to venv '$2'"
-    _setv_deactivate $1 >& /dev/null
-    echo -ne "..." && _setv_create $2 &> /dev/null
-    # _setv_deactivate $1 >& /dev/null
-    echo -ne "..." && _setv_activate $2 &> /dev/null
-    echo -ne "......" && _setv_populate $2 -r /tmp/$2/requirements.txt &> /dev/null
-    echo " done"
-    rm -rf /tmp/$2
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+        echo "$prog: $func: venv '$venv' doesn't exist"
+        return $setv_fail
+    fi
+
+    if [ -d $SETV_VIRTUAL_ENV_DIR/$clone ]; then
+        echo "$prog: $func: venv '$clone' already exists"
+        return $setv_fail
+    fi
+
+    mkdir -p /tmp/$clone && pip3 freeze > /tmp/$clone/$clone.txt
+    echo -n "$prog: $func: cloning venv '$venv' to venv '$clone'"
+    echo -ne "..." && _setv_create $clone &> /dev/null
+    echo -ne "...." && _setv_activate $clone &> /dev/null
+    echo -ne "....." && _setv_populate $clone -r /tmp/$clone/$clone.txt &> /dev/null
+    echo -e " done\n"
+    rm -rf /tmp/$clone
 
     # reactivate original venv
-    _setv_activate $1 &> /dev/null
+    _setv_activate $venv &> /dev/null
 
     return
 }
@@ -246,19 +258,15 @@ function _setv_clone()
 function _setv_delete()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
-    
-    # [[ $INVENV == 1 ]] && local _curr_venv=`basename $VIRTUAL_ENV` || local _curr_venv=""
-    # if [ $INVENV == 1 ]; then
-    #     local _curr_venv=`basename $VIRTUAL_ENV`
-    # fi
+    local venv=$1
 
-    if [ -z $1 ]; then
+    if [ -z $venv ]; then
 
         echo "$prog: $func: no venv specified to delete"
         return $setv_fail
     else
-        if [ -d $SETV_VIRTUAL_ENV_DIR/$1 ]; then
-            local _str="'$1'"
+        if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+            local _str="'$venv'"
             if [ "$1" == "_curr_venv" ]; then
                 _str="'$1' (currently active)"
             fi
@@ -273,11 +281,11 @@ function _setv_delete()
                             [[ "${PWD##${SETV_VIRTUAL_ENV_DIR}}" != "${PWD}" ]] && cd $SETV_VIRTUAL_ENV_DIR
                             rm -rf $SETV_VIRTUAL_ENV_DIR/$1
                             _setv_invenv
-                            echo "$prog: $func: venv '$1' deleted"
+                            echo "$prog: $func: venv '$venv' deleted"
                             break
                             ;;
                     n | N) 
-                            echo "Not deleting venv '$1'"
+                            echo "Not deleting venv '$venv'"
                             break
                             ;;
                     *)
@@ -285,7 +293,7 @@ function _setv_delete()
                 esac
             done
         else
-            echo "$prog: $func: no venv named '$1'"
+            echo "$prog: $func: no venv named '$venv'"
             return $setv_fail
         fi
     fi
@@ -295,13 +303,14 @@ function _setv_delete()
 function _setv_Home()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local home=$1
 
-    if [ -z $1 ]; then
+    if [ -z $home ]; then
         echo "$prog: $func: specify a virtual environment home location"
         return $setv_fail
     else
-        echo "$prog: $func: creating virtual environment home location '$1'"
-        mkdir -pv $1
+        echo "$prog: $func: creating virtual environment home location '$home'"
+        mkdir -pv $home
         export SETV_VIRTUAL_ENV_DIR=$1
     fi
 }
@@ -325,7 +334,7 @@ export -f _setv_create
 export -f _setv_deactivate
 export -f _setv_delete
 export -f _setv_Home
-export -f _setv_help_
+export -f _setv_help
 export -f _setv_populate
 export -f _setv_clone
 export -f _setv_list
