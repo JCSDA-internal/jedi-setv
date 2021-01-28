@@ -37,8 +37,8 @@ function _setv_help() {
         echo -e "  install (optionally from <pkg-file>) and activate 'venv'"
     echo -n "  --update --package <pkg-file> venv"
         echo -e "  update 'venv' from <pkg-file>"
-    echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
-    echo -e "  --switch venv  switch to 'venv'"
+    # echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
+    # echo -e "  --switch venv  switch to 'venv'"
     echo -e "  --delete venv  delete virtual environment 'venv'"
 
     echo -n "  --venvdir <dir>  specify virtual environment home location"
