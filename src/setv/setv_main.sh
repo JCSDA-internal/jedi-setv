@@ -117,15 +117,29 @@ function setv() {
 
                 case $cmd in
                     install)
-                        echo "$prog: installing venv '$venv'"
-                        _setv_create $venv && _setv_activate $venv && _setv_populate $venv $_rqmt_file
-                        return
+                        _setv_venv_exists $venv
+                        ret=$?
+                        if [ $ret -eq 0 ]; then
+                            echo "$prog: venv '$venv' already exists"
+                            return
+                        else
+                            echo "$prog: installing venv '$venv'"
+                            _setv_create $venv && _setv_activate $venv && _setv_populate $venv $_rqmt_file
+                            return
+                        fi
                         ;;
 
                     update)
-                        echo "$prog: updating venv '$venv'"
-                         # env exists but may not be active; if not in the desired venv, current venv will be deactivated
-                        _setv_activate $venv && _setv_populate $venv $_rqmt_file
+                        if [ -z $_rqmt_file ]; then
+                            echo "$prog: must specify a package file from which to update venv '$venv'"
+                            return
+                        else
+                            echo "$prog: updating venv '$venv'"
+                            # venv exists but may not be active; if the venv to update isn't active,
+                            # current venv will be deactivated and venv to be updated becomes active
+                            _setv_activate $venv && _setv_populate $venv $_rqmt_file
+                        fi
+
                         return
                         ;;
                 esac
@@ -144,6 +158,23 @@ function setv() {
                     *)
                         echo -e "$prog: invalid usage $prog $args\n"
                         return
+                        ;;
+                esac
+                ;;
+
+            --switch)
+                case $# in
+                    2)
+                        venv=$2
+                        _setv_switch $venv
+                        shift 3
+                        return
+                        ;;
+
+                    *)
+                        echo -e "$prog: invalid usage $prog $args\n"
+                        return
+                        ;;
                 esac
                 ;;
 

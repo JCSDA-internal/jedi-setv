@@ -32,11 +32,13 @@ function _setv_help() {
     echo -e "  --help  help (show this information)"
     echo -e "  --list  list available virtual environments\n"
 
+    echo -e "  --activate venv  activate 'venv'"
     echo -n "  --install [--package <pkg-file>] venv"
         echo -e "  install (optionally from <pkg-file>) and activate 'venv'"
-    echo -n "  --update [--package <pkg-file>] venv"
-        echo -e "  update (optionally from <pkg-file>) 'venv'"
+    echo -n "  --update --package <pkg-file>]venv"
+        echo -e "  update 'venv' from <pkg-file>"
     echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
+    echo -e "  --switch venv  switch to 'venv'"
     echo -e "  --delete venv  delete virtual environment 'venv'"
 
     echo -n "  --venvdir <dir>  specify virtual environment home location"
@@ -65,7 +67,7 @@ function _setv_checkArg()
 function _setv_invenv()
 {
     # INVENV=$(python3 -c 'import sys; print ("1" if sys.base_prefix != sys.prefix else "0")')
-    INVENV=$(python3 -c 'import os;  print ("1" if "VIRTUAL_ENV" in os.environ else "0")')
+    INVENV=$(python -c 'import os;  print ("1" if "VIRTUAL_ENV" in os.environ else "0")')
     [[ ! -z $VIRTUAL_ENV && $INVENV -eq 1 ]] && _curr_venv=`basename $VIRTUAL_ENV` || _curr_venv=""
 }
 
@@ -74,7 +76,11 @@ function _setv_venv_exists()
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
     local venv=$1
 
-    [[ -d $SETV_VIRTUAL_ENV_DIR/$venv ]] && return $setv_fail
+    if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+        return
+    fi
+
+    return $setv_fail
 }
 
 # Creates a new virtual environment
@@ -95,11 +101,14 @@ function _setv_create()
               _upgrade_deps="--upgrade-deps"
         fi
 
-        python3 -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$venv
+        python -m venv $_upgrade_deps $SETV_VIRTUAL_ENV_DIR/$venv
         echo "$prog: $func: successfully created venv '$venv'" ; echo
     else
         echo "$prog: $func: venv '$venv' already exists."
+        return
     fi
+
+    _setv_invenv
 }
 
 # Activates a new virtual environment
@@ -116,7 +125,7 @@ function _setv_activate()
     if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
         if [ ! -z $_curr_venv ]; then
             if [ "$venv" != "$_curr_venv" ]; then
-                echo -ne "$prog: $func: deactivating current venv ('$_curr_venv')..." && \
+                echo -n "$prog: $func: deactivating current venv ('$_curr_venv')..." && \
                 _setv_deactivate $_curr_venv >& /dev/null && echo " done"
             else
                 echo "$prog: $func: venv '$venv' ($_curr_venv) is already active"
@@ -193,21 +202,29 @@ function _setv_populate()
 
     # virtual environment must exist first
     if [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
-        echo "$prog: $func: no venv named '${1}', create and activate it first"
+        echo "$prog: $func: no venv named '$venv', create and activate it first"
         return $setv_fail
     elif [ $INVENV == 1 ]; then
         echo "$prog: $func: populating venv '$venv'"
         pip install --upgrade pip
 
-        pip3 install --no-cache-dir -r $RQMT_FILE
+        pip install --no-cache-dir -r $RQMT_FILE
         if [ -n "${_rqmt_file}" ]; then
-            echo "   $func: ...using requirements file '$_rqmt_file'"
-            echo "   $func: ...installing required python packages"
-            pip3 install --no-cache-dir -r $_rqmt_file
+            if [ "$_rqmt_file" == "r2d2" ]; then
+                _rqmt_file=$SETV_DEFAULT_R2D2_RQMTS_FILE
+            fi
+
+            if [ "$_rqmt_file" == "ewok" ]; then
+                _rqmt_file=$SETV_DEFAULT_EWOK_RQMTS_FILE
+            fi
+
+            echo -e "\n\t$func: ...using requirements file '$_rqmt_file'"
+            echo -e "\t$func: ...installing required python packages"
+            pip install --no-cache-dir -r $_rqmt_file
         fi
 
         echo ; echo "Installed packages:" 
-        pip3 list
+        pip list
         echo
     else
         echo "$prog: $func: venv '$SETV_VIRTUAL_ENV_DIR/$venv' must be activated before populating it"
@@ -216,6 +233,8 @@ function _setv_populate()
 
     # unset requirements file for any subsequent venv populate requests
     _rqmt_file=""
+
+    _setv_invenv
 }
 
 # Clone a virtual environment
@@ -223,10 +242,11 @@ function _setv_clone()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
     local venv=$1 clone=$2
+    local cvenv=$_curr_venv
 
     # can't clone to self
     if [ "$venv" == "$clone" ]; then
-        echo "$prog: $func: cannot clone self: '$1' to '$2'"
+        echo "$prog: $func: cannot clone self: '$venv' to '$venv'"
         return $setv_fail
     fi
 
@@ -240,7 +260,7 @@ function _setv_clone()
         return $setv_fail
     fi
 
-    mkdir -p /tmp/$clone && pip3 freeze > /tmp/$clone/$clone.txt
+    mkdir -p /tmp/$clone && pip freeze > /tmp/$clone/$clone.txt
     echo -n "$prog: $func: cloning venv '$venv' to venv '$clone'"
     echo -ne "..." && _setv_create $clone &> /dev/null
     echo -ne "...." && _setv_activate $clone &> /dev/null
@@ -248,8 +268,32 @@ function _setv_clone()
     echo -e " done\n"
     rm -rf /tmp/$clone
 
-    # reactivate original venv
-    _setv_activate $venv &> /dev/null
+    # reactivate original active venv
+    _setv_activate $cvenv &> /dev/null
+    _setv_invenv
+
+    return
+}
+
+function _setv_switch()
+{
+    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
+    local venv=$1
+
+    if [ "$venv" == "$_curr_venv" ]; then
+        echo "$prog: $func: venv '$venv' is already active"
+        return
+    fi
+
+    if [ ! -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
+        echo "$prog: $func: venv '$venv' doesn't exist"
+        return $setv_fail
+    fi
+
+    echo -n "$prog: $func: switch to venv '$venv'... "
+    _setv_deactivate $_curr_venv &> /dev/null
+    _setv_activate $venv &> /dev/null && echo -e " done\n"
+    _setv_invenv
 
     return
 }
@@ -259,16 +303,16 @@ function _setv_delete()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
     local venv=$1
+    local _str
 
     if [ -z $venv ]; then
-
         echo "$prog: $func: no venv specified to delete"
         return $setv_fail
     else
         if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
-            local _str="'$venv'"
-            if [ "$1" == "_curr_venv" ]; then
-                _str="'$1' (currently active)"
+            _str="'$venv'"
+            if [ "$venv" == "$_curr_venv" ]; then
+                _str="'$venv' (currently active)"
             fi
 
             while true; do
@@ -337,6 +381,7 @@ export -f _setv_vdir
 export -f _setv_help
 export -f _setv_populate
 export -f _setv_clone
+export -f _setv_switch
 export -f _setv_list
 export -f _setv_invenv
 export -f _setv_venv_exists
