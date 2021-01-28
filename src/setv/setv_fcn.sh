@@ -309,7 +309,7 @@ function _setv_vdir()
         echo "$prog: $func: specify a virtual environment home location"
         return $setv_fail
     else
-        echo "$prog: $func: creating virtual environment home location '$vdir'"
+        echo "$prog: $func: setting virtual environment home location to '$vdir'"
         mkdir -pv $vdir
         export SETV_VIRTUAL_ENV_DIR=$vdir
     fi
