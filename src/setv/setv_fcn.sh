@@ -39,7 +39,7 @@ function _setv_help() {
     echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
     echo -e "  --delete venv  delete virtual environment 'venv'"
 
-    echo -n "  --home <dir>  specify virtual environment home location"
+    echo -n "  --venvdir <dir>  specify virtual environment home location"
     echo -e " (current: $SETV_VIRTUAL_ENV_DIR)\n"
 }
 
@@ -300,18 +300,18 @@ function _setv_delete()
 }
 
 # Set / reset SETV_VIRTUAL_ENV_DIR
-function _setv_Home()
+function _setv_vdir()
 {
     local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
-    local home=$1
+    local vdir=$1
 
-    if [ -z $home ]; then
+    if [ -z $vdir ]; then
         echo "$prog: $func: specify a virtual environment home location"
         return $setv_fail
     else
-        echo "$prog: $func: creating virtual environment home location '$home'"
-        mkdir -pv $home
-        export SETV_VIRTUAL_ENV_DIR=$1
+        echo "$prog: $func: creating virtual environment home location '$vdir'"
+        mkdir -pv $vdir
+        export SETV_VIRTUAL_ENV_DIR=$vdir
     fi
 }
 
@@ -333,7 +333,7 @@ export -f _setv_activate
 export -f _setv_create
 export -f _setv_deactivate
 export -f _setv_delete
-export -f _setv_Home
+export -f _setv_vdir
 export -f _setv_help
 export -f _setv_populate
 export -f _setv_clone

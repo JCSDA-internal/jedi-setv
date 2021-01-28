@@ -69,9 +69,9 @@ function setv() {
                 return
                 ;;
 
-            --home) 
-                $home=$2
-                _setv_Home $home
+            --venvdir) 
+                $vdir="$2"
+                _setv_Home $vdir
                 return
                 ;;
 
