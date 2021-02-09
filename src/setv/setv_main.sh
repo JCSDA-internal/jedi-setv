@@ -46,7 +46,7 @@ _curr_venv=${VIRTUAL_ENV:-""}
 # Main function
 #
 function setv() {
-    # see setv_fcn/_setv_help() for options
+    # see setv_fcn.sh/_setv_help() for switches / implementation
 
     local opt args cmd
 
@@ -75,7 +75,7 @@ function setv() {
                 return
                 ;;
 
-            --activate | --deactivate | --create | --activate | --populate | --delete)
+            --activate | --deactivate | --create | --populate | --delete)
                     venv=$2
                     if [ "$cmd" == "populate" ]; then
                         _rqmt_file=$3
