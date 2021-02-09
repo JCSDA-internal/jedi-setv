@@ -25,6 +25,20 @@ function _setvcomplete_()
     COMPREPLY=($(compgen -W "$names" -X "$xpat" -- "$word"))
 }
 
+# help info
+#
+# note that there exist some commands not documented here; refer to setv_main.sh
+# as well as functions below that implement these command switches
+#
+# --activate | --deactivate | --create | --populate
+#    create / activate / populate == install
+#
+# --clone
+#    make a copy of a venv
+#
+# --switch
+#    switch to a differenv venv; same as --activate once a venv is installed
+#
 function _setv_help() {
     echo
     echo "Usage: setv options <venv>"
@@ -36,9 +50,6 @@ function _setv_help() {
     echo -n "  --install [--package <pkg-file>] venv"
         echo -e "  install (optionally from <pkg-file>) and activate 'venv'"
     echo -n "  --update --package <pkg-file> venv"
-        echo -e "  update 'venv' from <pkg-file>"
-    # echo -e "  --clone venv clone   clone virtual environment 'venv' into 'clone'"
-    # echo -e "  --switch venv  switch to 'venv'"
     echo -e "  --delete venv  delete virtual environment 'venv'"
 
     echo -n "  --venvdir <dir>  specify virtual environment home location"
@@ -66,6 +77,7 @@ function _setv_checkArg()
 # Determine whether or not a venv is active
 function _setv_invenv()
 {
+    # The following will also work; left here as a placeholder / reminder
     # INVENV=$(python3 -c 'import sys; print ("1" if sys.base_prefix != sys.prefix else "0")')
     INVENV=$(python -c 'import os;  print ("1" if "VIRTUAL_ENV" in os.environ else "0")')
     [[ ! -z $VIRTUAL_ENV && $INVENV -eq 1 ]] && _curr_venv=`basename $VIRTUAL_ENV` || _curr_venv=""
@@ -175,7 +187,7 @@ function _setv_deactivate()
     fi
 }
 
-# Check argument list (from '-p' or '-N') for a specified requirements file
+# Check argument list for a specified requirements file
 function _setv_rqmts_file()
 {
     local args=("$@")
