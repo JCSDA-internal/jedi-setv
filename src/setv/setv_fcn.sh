@@ -376,6 +376,7 @@ function _setv_list()
 {
     local _star=""
 
+    _setv_invenv
     echo -e "Virtual environments available in ${SETV_VIRTUAL_ENV_DIR}:\n"
     for venv in $(ls -l "${SETV_VIRTUAL_ENV_DIR}" | egrep '^d' | awk -F " " '{print $NF}')
     do
