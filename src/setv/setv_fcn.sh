@@ -83,18 +83,6 @@ function _setv_invenv()
     [[ ! -z $VIRTUAL_ENV && $INVENV -eq 1 ]] && _curr_venv=`basename $VIRTUAL_ENV` || _curr_venv=""
 }
 
-function _setv_venv_exists()
-{
-    local func="`echo ${FUNCNAME[0]} | cut -d _ -f 3 | sed "s/^ //g"`"
-    local venv=$1
-
-    if [ -d $SETV_VIRTUAL_ENV_DIR/$venv ]; then
-        return
-    fi
-
-    return $setv_fail
-}
-
 # Creates a new virtual environment
 function _setv_create()
 {
@@ -119,8 +107,6 @@ function _setv_create()
         echo "$prog: $func: venv '$venv' already exists."
         return
     fi
-
-    _setv_invenv
 }
 
 # Activates a new virtual environment
@@ -397,7 +383,6 @@ export -f _setv_clone
 export -f _setv_switch
 export -f _setv_list
 export -f _setv_invenv
-export -f _setv_venv_exists
 export -f _setv_checkArg
 export -f _setv_rqmts_file
 

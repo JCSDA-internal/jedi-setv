@@ -117,16 +117,9 @@ function setv() {
 
                 case $cmd in
                     install)
-                        _setv_venv_exists $venv
-                        ret=$?
-                        if [ $ret -eq 0 ]; then
-                            echo "$prog: venv '$venv' already exists"
-                            return
-                        else
-                            echo "$prog: installing venv '$venv'"
-                            _setv_create $venv && _setv_activate $venv && _setv_populate $venv $_rqmt_file
-                            return
-                        fi
+                        echo "$prog: installing venv '$venv'"
+                        _setv_create $venv && _setv_activate $venv && _setv_populate $venv $_rqmt_file
+                        return
                         ;;
 
                     update)
